@@ -1,0 +1,6 @@
+[submodule "SQLiteCPP"]
+	path = SQLiteCPP
+	url = https://github.com/qmick/SQLiteCPP.git
+[submodule "cppjieba"]
+	path = cppjieba
+	url = https://github.com/yanyiwu/cppjieba.git
