@@ -4,7 +4,7 @@
 #include <resultitemdelegate.h>
 #include <resulttablemodel.h>
 #include <SQLiteCPP/DB.h>
-//#include <SQLiteCPP/sample/MyTokenizer.h>
+#include <SQLiteCPP/sample/MyTokenizer.h>
 #include <SQLiteCPP/sample/rankfunc.h>
 #include <SQLiteCPP/sqlite3.h>
 #include <memory>
@@ -22,7 +22,7 @@ using std::string;
 using std::get;
 using std::to_string;
 
-static string sql1 = "CREATE VIRTUAL TABLE IF NOT EXISTS file_index USING fts4(name, path, content, tokenize=porter)";
+static string sql1 = "CREATE VIRTUAL TABLE IF NOT EXISTS file_index USING fts4(name, path, content, tokenize=jieba jieba)";
 static string sql3 = "INSERT INTO file_index VALUES(?,?,?)";
 static string sql6 = "SELECT name,rank,snippet(file_index, \"<font color=red>\", \"</font>\", \"...\", -1, 11) AS snippet,path,content FROM file_index JOIN (SELECT docid, rank(matchinfo(file_index,'pcxnl'),1,1,1) AS rank FROM file_index WHERE file_index MATCH ? ORDER BY rank DESC ) AS ranktable USING(docid) WHERE file_index MATCH ? ORDER BY ranktable.rank DESC";
 
@@ -46,7 +46,7 @@ QFileInfoList getFileList(QString path)
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow),
-    _db("../msg.db")
+    _db("./msg.db")
 {
     ui->setupUi(this);
     ui->tableView->setItemDelegate(&_delegate);
@@ -54,15 +54,20 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->tableView->horizontalHeader()->setStretchLastSection(true);
     ui->statusBar->addWidget(&_count_label);
     ui->statusBar->addWidget(&_time_label);
+    ui->lineEdit->setFocus();
     connect(ui->lineEdit, SIGNAL(textChanged(const QString &)),
             this, SLOT(search(const QString &)));
     connect(ui->tableView, SIGNAL(doubleClicked(QModelIndex)),
             this, SLOT(pop_content(QModelIndex)));
+    QTime myTimer;
+    myTimer.start();
     try {
         initDB();
     } catch (std::exception &e) {
         QMessageBox::warning(this, "Error", e.what(), QMessageBox::Ok);
     }
+
+    _time_label.setText(QString::number(myTimer.elapsed()) + "ms");
 }
 
 MainWindow::~MainWindow()
@@ -72,21 +77,23 @@ MainWindow::~MainWindow()
 
 void MainWindow::initDB()
 {
-//    auto tknz = make_shared<MyTokenizer>("../FTSDemo/dict/");
-//    _db.add_tokenizer("jieba", tknz);
+    auto tknz = make_shared<MyTokenizer>("./");
+    _db.add_tokenizer("jieba", tknz);
     _db.create_function("rank", -1, rankfunc);
     _db.update("DROP TABLE IF EXISTS file_index");
     _db.update(sql1);
 
     QFileInfoList files = getFileList("./");
+    _db.update("BEGIN TRANSACTION;");
     auto stmt = _db.prepare(sql3);
     for (auto &i : files)
     {
-        stmt.bind_all(i.baseName().toLocal8Bit().data(),
-                      i.absoluteFilePath().toLocal8Bit().data(), "");
+        stmt.bind_all(i.baseName().toUtf8().data(),
+                      i.absoluteFilePath().toUtf8().data(), "");
         stmt.step();
         stmt.reset();
     }
+    _db.update("COMMIT;");
 }
 
 void MainWindow::search(const QString &keyword)
