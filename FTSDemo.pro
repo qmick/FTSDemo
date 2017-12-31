@@ -25,15 +25,11 @@ DEFINES += QT_DEPRECATED_WARNINGS
 INCLUDEPATH += ./cppjieba/include
 INCLUDEPATH += ./cppjieba/deps
 
-DEFINES += SQLITE_ENABLE_FTS4
+DEFINES += SQLITE_ENABLE_FTS4 USE_FTS
 SOURCES += \
         main.cpp \
         mainwindow.cpp \
     SQLiteCPP/sample/MyTokenizer.cpp \
-    SQLiteCPP/DB.cpp \
-    SQLiteCPP/Exception.cpp \
-    SQLiteCPP/ResultSet.cpp \
-    SQLiteCPP/Statement.cpp \
     SQLiteCPP/Tokenizer.cpp \
     SQLiteCPP/sqlite3.c \
     resulttablemodel.cpp \
@@ -46,7 +42,6 @@ HEADERS += \
     SQLiteCPP/DB.h \
     SQLiteCPP/Exception.h \
     SQLiteCPP/fts3_tokenizer.h \
-    SQLiteCPP/ResultSet.h \
     SQLiteCPP/sqlite3.h \
     SQLiteCPP/Statement.h \
     SQLiteCPP/Tokenizer.h \

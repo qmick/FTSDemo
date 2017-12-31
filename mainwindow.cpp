@@ -77,7 +77,7 @@ MainWindow::~MainWindow()
 
 void MainWindow::initDB()
 {
-    auto tknz = make_shared<MyTokenizer>("./");
+    auto tknz = make_shared<MyTokenizer>("../FTSDemo/cppjieba");
     _db.add_tokenizer("jieba", tknz);
     _db.create_function("rank", -1, rankfunc);
     _db.update("DROP TABLE IF EXISTS file_index");
@@ -111,15 +111,15 @@ void MainWindow::search(const QString &keyword)
 
     try {
         auto rs = _db.query(sql6, local_keyword, local_keyword);
-        while (rs.next())
+        while (rs.step() == sqlite::Statement::ROW)
         {
             count++;
-            auto r = rs.get<string, double, string, string>();
+            //string, double, string, string
             QStringList row;
-            row.append(QString::fromUtf8(get<0>(r).c_str()));
-            row.append(QString::number(get<1>(r)));
-            row.append(QString::fromUtf8(get<2>(r).c_str()));
-            row.append(QString::fromUtf8(get<3>(r).c_str()));
+            row.append(QString::fromUtf8(rs.column_string(0).c_str()));
+            row.append(QString::number(rs.column_double(1)));
+            row.append(QString::fromUtf8(rs.column_string(2).c_str()));
+            row.append(QString::fromUtf8(rs.column_string(3).c_str()));
             _model.mData.append(row);
         }
     }
